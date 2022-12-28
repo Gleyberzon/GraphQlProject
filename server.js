@@ -1,10 +1,20 @@
-const express =require('express');
-const { buildSchema } = require('graphql');
-const { graphqlHTTP } = require('express-graphql');
+const express = require("express");
+const { buildSchema } = require("graphql");
+const { graphqlHTTP } = require("express-graphql");
 const axios = require(`axios`);
+const { Client } = require("pg");
+
+const client = new Client({
+  host: "localhost",
+  user: "postgres",
+  port: 5432,
+  password: "postgres",
+  database: "graph",
+});
+
+client.connect();
 
 const app = express();
-
 
 /*
 ID
@@ -53,71 +63,80 @@ const schema = buildSchema(`
         }
    `);
 
-   //createUser(name: String!, age: Int!, college: String!): User
+//createUser(name: String!, age: Int!, college: String!): User
 
-   const user = {
-    
-   }
+const user = {};
 
-const root={
-    hello: ()=>{
-       return "hello world";
-       //return null; 
-    },
-    welcomeMessage: (args) => {
-        console.log(args);
-        return `hey ${args.name} today is ${args.dayOfweek}`;
-    },
-    getUser: ()=>{
-        const user = {
-            name: 'shlomo m',
-            age:34,
-            college: 'tec',
-        };
-        return user;
-    },
-    getUsers:()=>{
-    const users = [
-        {
-            name: 'shlomo m',
-            age:34,
-            college: 'tec',
-        },
-        {
-            name: 'shlomo mh',
-            age:340,
-            college: 'tecn',
-        }
-    ];
-    return users;
-},
-    getPostsFromExternalAPI: () => {
-      const result=await 
-      axios.get('https://jsonplaceholder.typicode.com/posts');
-      return result.data
-       /* return axios
+const root = {
+  hello: () => {
+    return "hello world";
+    //return null;
+  },
+  welcomeMessage: (args) => {
+    console.log(args);
+    return `hey ${args.name} today is ${args.dayOfweek}`;
+  },
+  getUser: () => {
+    const user = {
+      name: "shlomo m",
+      age: 34,
+      college: "tec",
+    };
+    return user;
+  },
+  getUsers: async () => {
+    // let users = [
+    //   {
+    //     name: "shlomo m",
+    //     age: 34,
+    //     college: "tec",
+    //   },
+    //   {
+    //     name: "shlomo mh",
+    //     age: 340,
+    //     college: "tecn",
+    //   },
+    // ];
+
+    const users = await client.query(`select * from "User";`, (err, res) => {
+      if (!err) {
+        console.log(res.rows);
+        users = res.rows;
+      } else {
+        console.log(err);
+        return [""];
+      }
+      client.end;
+      return users;
+    });
+  },
+  getPostsFromExternalAPI: async () => {
+    const result = await axios.get(
+      "https://jsonplaceholder.typicode.com/posts"
+    );
+    return result.data;
+    /* return axios
         .get("https://jsonplaceholder.typicode.com/posts")
         .then(result => result.data);*/
-        
-},
-setMesseage: ({newMessage}) => {
-    message=newMessage;
+  },
+  setMesseage: ({ newMessage }) => {
+    message = newMessage;
     return message;
-},
-message: () => message,
-createUser: (args)=> {
+  },
+  message: () => message,
+  createUser: (args) => {
     console.log(args);
     return args.user;
-}
+  },
 };
 
 app.use(
-    '/graphql',
-    graphqlHTTP({
+  "/graphql",
+  graphqlHTTP({
     graphiql: true,
     schema: schema,
     rootValue: root,
-}) 
+  })
 );
 
-app.listen(4000, () => console.log('server on port 4000'));
+app.listen(4000, () => console.log("server on port 4000"));
