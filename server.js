@@ -45,7 +45,7 @@ const schema = buildSchema(`
         type Query {
             hello: String!
             welcomeMessage(name:String, dayOfweek: String!): String
-            getUser:User
+            getUser: User
             getUsers: [User]
             getPostsFromExternalAPI: [Post]
             message: String
@@ -85,39 +85,19 @@ const root = {
     return user;
   },
   getUsers: async () => {
-    // let users = [
-    //   {
-    //     name: "shlomo m",
-    //     age: 34,
-    //     college: "tec",
-    //   },
-    //   {
-    //     name: "shlomo mh",
-    //     age: 340,
-    //     college: "tecn",
-    //   },
-    // ];
-
-    const users = await client.query(`select * from "User";`, (err, res) => {
-      if (!err) {
-        console.log(res.rows);
-        users = res.rows;
-      } else {
-        console.log(err);
-        return [""];
-      }
-      client.end;
-      return users;
-    });
+    try {
+      const result = await client.query(`SELECT * FROM "User"`);
+      return result.rows;
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
   },
   getPostsFromExternalAPI: async () => {
     const result = await axios.get(
       "https://jsonplaceholder.typicode.com/posts"
     );
     return result.data;
-    /* return axios
-        .get("https://jsonplaceholder.typicode.com/posts")
-        .then(result => result.data);*/
   },
   setMesseage: ({ newMessage }) => {
     message = newMessage;
