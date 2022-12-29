@@ -4,7 +4,7 @@ const { graphqlHTTP } = require("express-graphql");
 const axios = require(`axios`);
 const { Client } = require("pg");
 
-const client = new Client({
+const postgresClient = new Client({
   host: "localhost",
   user: "postgres",
   port: 5432,
@@ -12,7 +12,7 @@ const client = new Client({
   database: "graph",
 });
 
-client.connect();
+postgresClient.connect();
 
 const app = express();
 
@@ -58,14 +58,12 @@ const schema = buildSchema(`
         }
 
         type Mutation{
-            setMesseage(newMessage: String): String
+            setMessage(newMessage: String): String
             createUser(user: UserInput): User
         }
    `);
 
 //createUser(name: String!, age: Int!, college: String!): User
-
-const user = {};
 
 const root = {
   hello: () => {
@@ -86,8 +84,7 @@ const root = {
   },
   getUsers: async () => {
     try {
-      const result = await client.query(`SELECT * FROM "User"`);
-      return result.rows;
+      return (await postgresClient.query(`SELECT * FROM "User"`)).rows;
     } catch (err) {
       console.error(err);
       throw err;
@@ -99,14 +96,21 @@ const root = {
     );
     return result.data;
   },
-  setMesseage: ({ newMessage }) => {
+  setMessage: ({ newMessage }) => {
     message = newMessage;
     return message;
   },
   message: () => message,
-  createUser: (args) => {
-    console.log(args);
-    return args.user;
+  createUser: async (args) => {
+    try {
+      await postgresClient.query(
+        ` INSERT INTO "User" (name, age, college) VALUES ('${args.user.name}', '${args.user.age}',  '${args.user.college}')`
+      );
+      return args.user;
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
   },
 };
 
