@@ -16,7 +16,6 @@ Boolean
 
 let message = "this is a message";
 
-
 const schema = buildSchema(`
 
     type Post {
@@ -53,15 +52,15 @@ const schema = buildSchema(`
 
 `);
 const user = {};
-var data ='';
+var data = "";
 
 var config = {
   connectionString:
-    "Driver=SQL Server;Server=DESKTOP-ADIHTO9\\SQLEXPRESS;Database=people;Trusted_Connection=true;",
+    "Driver=SQL Server;Server=LAPTOP-UVC3IKLO\\SQLEXPRESS;Database=people;Trusted_Connection=true;",
 };
 sql.connect(config, (err) => {
-   new sql.Request().query("SELECT * from Persons", (err, result) => {
-      console.log(".:The Good Place:.");
+  new sql.Request().query("SELECT * from users", (err, result) => {
+    console.log(".:The Good Place:.");
     if (err) {
       // SQL error, but connection OK.
       console.log("  Shirtballs: " + err);
@@ -69,7 +68,6 @@ sql.connect(config, (err) => {
       // All is rosey in your garden.
       data = result;
       console.log(data.recordset);
-      
     }
   });
 });
@@ -97,45 +95,41 @@ var root = {
     return user;
   },
 
-  getUsers: async() => {
-    //return data.recordset;
-
+  getUsers: async () => {
     const users = [
-        {
-            name: 'shlomo m',
-            age:34,
-            college: 'tec',
-        },
-        {
-            name: 'shlomo mh',
-            age:340,
-            college: 'tecn',
-        }
+      {
+        name: "shlomo m",
+        age: 34,
+        college: "tec",
+      },
+      {
+        name: "shlomo mh",
+        age: 340,
+        college: "tecn",
+      },
     ];
     return users;
   },
-  getUsersSql: async() =>{
+  getUsersSql: async () => {
     return data.recordset;
-
   },
 
   getPostsFromExternalAPI: () => {
     return axios
       .get("https://jsonplaceholder.typicode.com/posts")
-      .then(result => result.data);
+      .then((result) => result.data);
   },
 
-  setMesseage: ({newMessage}) => {
-    message=newMessage;
+  setMesseage: ({ newMessage }) => {
+    message = newMessage;
     return message;
-},
+  },
 
-message: () => message,
-createUser: (args)=> {
+  message: () => message,
+  createUser: (args) => {
     console.log(args);
     return args.user;
-}
-
+  },
 };
 
 app.use(
