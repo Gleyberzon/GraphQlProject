@@ -1,21 +1,10 @@
 const express = require("express");
 const { buildSchema } = require("graphql");
 const { graphqlHTTP } = require("express-graphql");
-const axios = require(`axios`);
-const { Client } = require("pg");
-
-const postgresClient = new Client({
-  host: "localhost",
-  user: "postgres",
-  port: 5432,
-  password: "postgres",
-  database: "graph",
-});
-
-postgresClient.connect();
+var sql = require("mssql/msnodesqlv8");
+const axios = require("axios");
 
 const app = express();
-
 /*
 ID
 String
@@ -29,88 +18,105 @@ let message = "this is a message";
 
 const schema = buildSchema(`
 
-        type Post{
-            userId: Int
-            id: Int
-            title: String
-            body: String
-        }
+    type Post {
+        userId: Int
+        id: Int
+        title: String
+        body: String
+    }
+    
+    type User {
+        name: String
+        age: Int
+        college: String
+    }
 
-        type User{
-            name: String
-            age: Int
-            college: String
-        }
+    type Query {
+        hello: String!
+        welcomeMessage(name: String, dayOfWeek: String!): String
+        getUser: User
+        getUsers: [User]
+        getPostsFromExternalAPI: [Post]
+        message: String
+        getUsersSql: [User]
+    }
+    input UserInput{
+        name: String!
+        age: Int!
+        college: String!
+    }
+    type Mutation{
+        setMesseage(newMessage: String): String
+        createUser(user: UserInput): User
+    }
 
-        type Query {
-            hello: String!
-            welcomeMessage(name:String, dayOfweek: String!): String
-            getUser: User
-            getUsers: [User]
-            getPostsFromExternalAPI: [Post]
-            message: String
-        }
+`);
+const user = {};
+var data = "";
 
-        input UserInput{
-            name: String!
-            age: Int!
-            college: String!
-        }
+var config = {
+  connectionString:
+    "Driver=SQL Server;Server=LAPTOP-UVC3IKLO\\SQLEXPRESS;Database=people;Trusted_Connection=true;",
+};
+sql.connect(config);
 
-        type Mutation{
-            setMessage(newMessage: String): String
-            createUser(user: UserInput): User
-        }
-   `);
-
-//createUser(name: String!, age: Int!, college: String!): User
-
-const root = {
+var root = {
   hello: () => {
-    return "hello world";
-    //return null;
+    return "Hello World";
   },
+
   welcomeMessage: (args) => {
-    console.log(args);
-    return `hey ${args.name} today is ${args.dayOfweek}`;
+    return `Hey ${args.name}, today is ${args.dayOfWeek}`;
   },
+
   getUser: () => {
     const user = {
-      name: "shlomo m",
+      name: "Shlomo",
       age: 34,
       college: "tec",
     };
     return user;
   },
+
   getUsers: async () => {
+    const users = [
+      {
+        name: "shlomo m",
+        age: 34,
+        college: "tec",
+      },
+      {
+        name: "shlomo mh",
+        age: 340,
+        college: "tecn",
+      },
+    ];
+    return users;
+  },
+  getUsersSql: async () => {
     try {
-      return (await postgresClient.query(`SELECT * FROM "User"`)).rows;
+      return (await new sql.Request().query(`SELECT * FROM users`)).recordset;
     } catch (err) {
       console.error(err);
       throw err;
     }
   },
-  getPostsFromExternalAPI: async () => {
-    const result = await axios.get(
-      "https://jsonplaceholder.typicode.com/posts"
-    );
-    return result.data;
+
+  getPostsFromExternalAPI: () => {
+    return axios
+      .get("https://jsonplaceholder.typicode.com/posts")
+      .then((result) => result.data);
   },
-  setMessage: ({ newMessage }) => {
+
+  setMesseage: ({ newMessage }) => {
     message = newMessage;
     return message;
   },
+
   message: () => message,
-  createUser: async (args) => {
-    try {
-      await postgresClient.query(
-        ` INSERT INTO "User" (name, age, college) VALUES ('${args.user.name}', '${args.user.age}',  '${args.user.college}')`
-      );
-      return args.user;
-    } catch (err) {
-      console.error(err);
-      throw err;
-    }
+  createUser: (args) => {
+    console.log(args);
+    return args.user;
   },
 };
 
@@ -123,4 +129,4 @@ app.use(
   })
 );
 
-app.listen(4000, () => console.log("server on port 4000"));
+app.listen(4000, () => console.log("Server on port 4000"));
