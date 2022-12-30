@@ -3,16 +3,22 @@ const { buildSchema } = require("graphql");
 const { graphqlHTTP } = require("express-graphql");
 var sql = require("mssql/msnodesqlv8");
 const axios = require("axios");
+const { parseArgs } = require("util");
 
 const app = express();
-/*
-ID
-String
-Int
-Float
-List[]
-Boolean
-*/
+//SQL users
+var users = [];
+let config = {
+  connectionString:
+    "Driver=SQL Server;Server=DESKTOP-NRHU0LQ\\SQLEXPRESS;Database=people;Trusted_Connection=true;",
+};
+sql.connect(config, (err) => {
+   new sql.Request().query("SELECT * from Users", (err, result) => {
+      users=result.recordset;
+      console.log(users);
+  });
+});
+
 
 let message = "this is a message";
 
@@ -27,6 +33,7 @@ const schema = buildSchema(`
     }
     
     type User {
+        id: Int
         name: String
         age: Int
         college: String
@@ -42,6 +49,7 @@ const schema = buildSchema(`
         getUsersSql: [User]
     }
     input UserInput{
+        id: Int!
         name: String!
         age: Int!
         college: String!
@@ -55,24 +63,7 @@ const schema = buildSchema(`
 const user = {};
 var data ='';
 
-var config = {
-  connectionString:
-    "Driver=SQL Server;Server=DESKTOP-ADIHTO9\\SQLEXPRESS;Database=people;Trusted_Connection=true;",
-};
-sql.connect(config, (err) => {
-   new sql.Request().query("SELECT * from Persons", (err, result) => {
-      console.log(".:The Good Place:.");
-    if (err) {
-      // SQL error, but connection OK.
-      console.log("  Shirtballs: " + err);
-    } else {
-      // All is rosey in your garden.
-      data = result;
-      console.log(data.recordset);
-      
-    }
-  });
-});
+
 sql.on("error", (err) => {
   // Connection borked.
   console.log(".:The Bad Place:.");
@@ -97,21 +88,18 @@ var root = {
     return user;
   },
 
-  getUsers: async() => {
-    //return data.recordset;
-
-    const users = [
-        {
-            name: 'shlomo m',
-            age:34,
-            college: 'tec',
-        },
-        {
-            name: 'shlomo mh',
-            age:340,
-            college: 'tecn',
-        }
-    ];
+  getUsers:()=> {
+    new sql.Request().query("SELECT * from Users", (err, result) => {
+      if (err) {
+        // SQL error, but connection OK.
+        console.log("  Shirtballs: " + err);
+      } else {
+        // All is rosey in your garden.
+  
+        users=result.recordset;
+        console.log(users);
+      }
+    });
     return users;
   },
   getUsersSql: async() =>{
