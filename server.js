@@ -3,25 +3,18 @@ const { buildSchema } = require("graphql");
 const { graphqlHTTP } = require("express-graphql");
 var sql = require("mssql/msnodesqlv8");
 const axios = require("axios");
-const { parseArgs } = require("util");
 
 const app = express();
-//SQL users
-var users = [];
-let config = {
-  connectionString:
-    "Driver=SQL Server;Server=DESKTOP-NRHU0LQ\\SQLEXPRESS;Database=people;Trusted_Connection=true;",
-};
-sql.connect(config, (err) => {
-   new sql.Request().query("SELECT * from Users", (err, result) => {
-      users=result.recordset;
-      console.log(users);
-  });
-});
-
+/*
+ID
+String
+Int
+Float
+List[]
+Boolean
+*/
 
 let message = "this is a message";
-
 
 const schema = buildSchema(`
 
@@ -49,7 +42,6 @@ const schema = buildSchema(`
         getUsersSql: [User]
     }
     input UserInput{
-        id: Int!
         name: String!
         age: Int!
         college: String!
@@ -57,18 +49,18 @@ const schema = buildSchema(`
     type Mutation{
         setMesseage(newMessage: String): String
         createUser(user: UserInput): User
+        updateUser(id: Int!, name: String!, age: Int!, college: String!): User
     }
 
 `);
 const user = {};
-var data ='';
+var data = "";
 
-
-sql.on("error", (err) => {
-  // Connection borked.
-  console.log(".:The Bad Place:.");
-  console.log("  Fork: " + err);
-});
+var config = {
+  connectionString:
+    "Driver=SQL Server;Server=DESKTOP-NRHU0LQ\\SQLEXPRESS;Database=people;Trusted_Connection=true;",
+};
+sql.connect(config);
 
 var root = {
   hello: () => {
@@ -88,42 +80,57 @@ var root = {
     return user;
   },
 
-  getUsers:()=> {
-    new sql.Request().query("SELECT * from Users", (err, result) => {
-      if (err) {
-        // SQL error, but connection OK.
-        console.log("  Shirtballs: " + err);
-      } else {
-        // All is rosey in your garden.
-  
-        users=result.recordset;
-        console.log(users);
-      }
-    });
+  getUsers: async () => {
+    const users = [
+      {
+        name: "shlomo m",
+        age: 34,
+        college: "tec",
+      },
+      {
+        name: "shlomo mh",
+        age: 340,
+        college: "tecn",
+      },
+    ];
     return users;
   },
-  getUsersSql: async() =>{
-    return data.recordset;
-
+  getUsersSql: async () => {
+    try {
+      return (await new sql.Request().query(`SELECT * FROM users`)).recordset;
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
   },
 
   getPostsFromExternalAPI: () => {
     return axios
       .get("https://jsonplaceholder.typicode.com/posts")
-      .then(result => result.data);
+      .then((result) => result.data);
   },
 
-  setMesseage: ({newMessage}) => {
-    message=newMessage;
+  setMesseage: ({ newMessage }) => {
+    message = newMessage;
     return message;
-},
+  },
 
-message: () => message,
-createUser: (args)=> {
+  message: () => message,
+  createUser: (args) => {
     console.log(args);
     return args.user;
-}
-
+  },
+  updateUser: async ({id, name, age, college}) =>{
+    try {
+      (await new sql.Request().query(`update users set name='${name}', age=${age}, college='${college}'
+      where id=${id}`)).recordset;
+      return {id, name, age, college}
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+    
+  }
 };
 
 app.use(
