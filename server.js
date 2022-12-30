@@ -26,6 +26,7 @@ const schema = buildSchema(`
     }
     
     type User {
+        id: Int
         name: String
         age: Int
         college: String
@@ -48,6 +49,7 @@ const schema = buildSchema(`
     type Mutation{
         setMesseage(newMessage: String): String
         createUser(user: UserInput): User
+        updateUser(id: Int!, name: String!, age: Int!, college: String!): User
     }
 
 `);
@@ -56,26 +58,9 @@ var data = "";
 
 var config = {
   connectionString:
-    "Driver=SQL Server;Server=LAPTOP-UVC3IKLO\\SQLEXPRESS;Database=people;Trusted_Connection=true;",
+    "Driver=SQL Server;Server=LAPTOP-UVC3IKLOSQLEXPRESS;Database=people;Trusted_Connection=true;",
 };
-sql.connect(config, (err) => {
-  new sql.Request().query("SELECT * from users", (err, result) => {
-    console.log(".:The Good Place:.");
-    if (err) {
-      // SQL error, but connection OK.
-      console.log("  Shirtballs: " + err);
-    } else {
-      // All is rosey in your garden.
-      data = result;
-      console.log(data.recordset);
-    }
-  });
-});
-sql.on("error", (err) => {
-  // Connection borked.
-  console.log(".:The Bad Place:.");
-  console.log("  Fork: " + err);
-});
+sql.connect(config);
 
 var root = {
   hello: () => {
@@ -111,7 +96,12 @@ var root = {
     return users;
   },
   getUsersSql: async () => {
-    return data.recordset;
+    try {
+      return (await new sql.Request().query(`SELECT * FROM users`)).recordset;
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
   },
 
   getPostsFromExternalAPI: () => {
@@ -129,6 +119,19 @@ var root = {
   createUser: (args) => {
     console.log(args);
     return args.user;
+  },
+  updateUser: async ({ id, name, age, college }) => {
+    try {
+      (
+        await new sql.Request()
+          .query(`update users set name='${name}', age=${age}, college='${college}'
+      where id=${id}`)
+      ).recordset;
+      return { id, name, age, college };
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
   },
 };
 
