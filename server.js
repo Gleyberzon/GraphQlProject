@@ -58,7 +58,7 @@ var data = "";
 
 var config = {
   connectionString:
-    "Driver=SQL Server;Server=LAPTOP-UVC3IKLOSQLEXPRESS;Database=people;Trusted_Connection=true;",
+    "Driver=SQL Server;Server=LAPTOP-UVC3IKLO\\SQLEXPRESS;Database=people;Trusted_Connection=true;",
 };
 sql.connect(config);
 
