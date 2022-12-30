@@ -42,6 +42,7 @@ const schema = buildSchema(`
         getUsersSql: [User]
     }
     input UserInput{
+        id: Int!
         name: String!
         age: Int!
         college: String!
@@ -49,10 +50,12 @@ const schema = buildSchema(`
     type Mutation{
         setMesseage(newMessage: String): String
         createUser(user: UserInput): User
+        createUserSql(user: UserInput): User
         updateUser(id: Int!, name: String!, age: Int!, college: String!): User
     }
 
 `);
+
 const user = {};
 var data = "";
 
@@ -128,6 +131,17 @@ var root = {
       where id=${id}`)
       ).recordset;
       return { id, name, age, college };
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  },
+  createUserSql: async (args) => {
+    try {
+      await new sql.Request().query(
+        ` INSERT INTO users VALUES ('${args.user.id}', '${args.user.name}', '${args.user.age}',  '${args.user.college}')`
+      );
+      return args.user;
     } catch (err) {
       console.error(err);
       throw err;
