@@ -16,7 +16,6 @@ Boolean
 
 let message = "this is a message";
 
-
 const schema = buildSchema(`
 
     type Post {
@@ -27,10 +26,10 @@ const schema = buildSchema(`
     }
     
     type User {
+        id: Int
         name: String
         age: Int
         college: String
-        id: Int
     }
 
     type Query {
@@ -41,8 +40,10 @@ const schema = buildSchema(`
         getPostsFromExternalAPI: [Post]
         message: String
         getUsersSql: [User]
+        getUserSql(id: Int!): [User]
     }
     input UserInput{
+        id: Int!
         name: String!
         age: Int!
         college: String!
@@ -50,20 +51,27 @@ const schema = buildSchema(`
     type Mutation{
         setMesseage(newMessage: String): String
         createUser(user: UserInput): User
-        deleteUser(id: Int!): User
-
+        createUserSql(user: UserInput): User
+        updateUserSql(id: Int!, name: String!, age: Int!, college: String!): User
+        deleteUserSql(id: Int!): User
     }
 
 `);
-  const users = {};
-  var data ='';
+
+const user = {};
+var data = "";
+
+//Person Path DataBase
+const RomanPath = 'DESKTOP-NRHU0LQ';
+const OfriPath = 'LAPTOP-UVC3IKLO';
+const ShlomoPath = 'DESKTOP-ADIHTO9'; //need to enter
+const Guest = ''; //Enter Your values
 
 var config = {
   connectionString:
-    "Driver=SQL Server;Server=DESKTOP-ADIHTO9\\SQLEXPRESS;Database=people;Trusted_Connection=true;",
+    `Driver=SQL Server;Server=${ShlomoPath}\\SQLEXPRESS;Database=people;Trusted_Connection=true;`,
 };
-sql.connect(config)
-
+sql.connect(config);
 
 var root = {
   hello: () => {
@@ -83,63 +91,96 @@ var root = {
     return user;
   },
 
-  getUsers: async() => {
-    //return data.recordset;
-
+  getUsers: async () => {
     const users = [
-        {
-            name: 'shlomo m',
-            age:34,
-            college: 'tec',
-        },
-        {
-            name: 'shlomo mh',
-            age:340,
-            college: 'tecn',
-        }
+      {
+        name: "shlomo m",
+        age: 34,
+        college: "tec",
+      },
+      {
+        name: "shlomo mh",
+        age: 340,
+        college: "tecn",
+      },
     ];
     return users;
   },
-  getUsersSql: async() =>{
-    //return data.recordset;
+  getUsersSql: async () => {
     try {
       return (await new sql.Request().query(`SELECT * FROM users`)).recordset;
     } catch (err) {
       console.error(err);
       throw err;
     }
-
   },
 
   getPostsFromExternalAPI: () => {
     return axios
       .get("https://jsonplaceholder.typicode.com/posts")
-      .then(result => result.data);
+      .then((result) => result.data);
   },
 
-  setMesseage: ({newMessage}) => {
-    message=newMessage;
+  setMesseage: ({ newMessage }) => {
+    message = newMessage;
     return message;
   },
 
   message: () => message,
-  createUser: (args)=> {
+  createUser: (args) => {
     console.log(args);
     return args.user;
-},
-deleteUser: async ({ id }) => {
-  try {
-    (
-      await new sql.Request()
-        .query(`delete from users where id=${id}`)
-    ).recordset;
-   //return  deletemessage;
-  } catch (err) {
-    console.error(err);
-    throw err;
-  }
-},
+  },
+  updateUserSql: async ({ id, name, age, college }) => {
+    try {
+      (
+        await new sql.Request()
+          .query(`update users set name='${name}', age=${age}, college='${college}'
+      where id=${id}`)
+      ).recordset;
+      return { id, name, age, college };
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  },
+  createUserSql: async (args) => {
+    try {
+      await new sql.Request().query(
+        ` INSERT INTO users VALUES ('${args.user.id}', '${args.user.name}', '${args.user.age}',  '${args.user.college}')`
+      );
+      return args.user;
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  },
+  deleteUserSql: async ({ id }) => {
+    try {
+      (
+        await new sql.Request()
+          .query(`delete from users where id=${id}`)
 
+      ).recordset;
+     return { id };
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  },
+  getUserSql: async ({ id }) => {
+    try {
+     return (
+
+         await new sql.Request()
+          .query(`select * from users where id=${id}`)
+            ).recordset;
+     
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  },
 };
 
 app.use(
@@ -152,3 +193,54 @@ app.use(
 );
 
 app.listen(4000, () => console.log("Server on port 4000"));
+/* 
+QUERIES TO CHECK VALIDATION
+
+# query{
+#   getUsersSql{
+#     id
+#     name
+#     age
+#     college
+#   }
+# }
+
+# mutation{
+#   updateUserSql(id: 2, name: "Antuan", age: 13, college:"ssr") {
+#     id
+#     name
+#     age
+#     college
+#   }
+# }
+
+# mutation{
+#   createUserSql(  
+#     user: {
+#       id: 5,
+#       name: "Daria",
+#       age:33,
+#       college: "Tto"
+#     }
+#   ){
+#     id
+#     name
+#     age
+#     college
+#   }
+# }
+
+# mutation{
+#   deleteUserSql (id:2){
+#     name
+#   }
+  
+# }
+#query{
+#   getUserSql(id:5){
+#     name
+#     college
+#     age
+#   }
+# }
+*/
