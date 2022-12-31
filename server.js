@@ -51,7 +51,7 @@ const schema = buildSchema(`
         setMesseage(newMessage: String): String
         createUser(user: UserInput): User
         createUserSql(user: UserInput): User
-        updateUser(id: Int!, name: String!, age: Int!, college: String!): User
+        updateUserSql(id: Int!, name: String!, age: Int!, college: String!): User
     }
 
 `);
@@ -59,9 +59,15 @@ const schema = buildSchema(`
 const user = {};
 var data = "";
 
+//Person Path DataBase
+const RomanPath = 'DESKTOP-NRHU0LQ';
+const OfriPath = 'LAPTOP-UVC3IKLO';
+const ShlomoPath = ''; //need to enter
+const Guest = ''; //Enter Your values
+
 var config = {
   connectionString:
-    "Driver=SQL Server;Server=LAPTOP-UVC3IKLO\\SQLEXPRESS;Database=people;Trusted_Connection=true;",
+    `Driver=SQL Server;Server=${RomanPath}\\SQLEXPRESS;Database=people;Trusted_Connection=true;`,
 };
 sql.connect(config);
 
@@ -123,7 +129,7 @@ var root = {
     console.log(args);
     return args.user;
   },
-  updateUser: async ({ id, name, age, college }) => {
+  updateUserSql: async ({ id, name, age, college }) => {
     try {
       (
         await new sql.Request()
@@ -159,3 +165,41 @@ app.use(
 );
 
 app.listen(4000, () => console.log("Server on port 4000"));
+/* 
+QUERIES TO CHECK VALIDATION
+
+# query{
+#   getUsersSql{
+#     id
+#     name
+#     age
+#     college
+#   }
+# }
+
+# mutation{
+#   updateUserSql(id: 2, name: "Antuan", age: 13, college:"ssr") {
+#     id
+#     name
+#     age
+#     college
+#   }
+# }
+
+# mutation{
+#   createUserSql(  
+#     user: {
+#       id: 5,
+#       name: "Daria",
+#       age:33,
+#       college: "Tto"
+#     }
+#   ){
+#     id
+#     name
+#     age
+#     college
+#   }
+# }
+
+*/
