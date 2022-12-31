@@ -30,6 +30,7 @@ const schema = buildSchema(`
         name: String
         age: Int
         college: String
+        id: Int
     }
 
     type Query {
@@ -49,35 +50,20 @@ const schema = buildSchema(`
     type Mutation{
         setMesseage(newMessage: String): String
         createUser(user: UserInput): User
+        deleteUser(id: Int!): User
+
     }
 
 `);
-const user = {};
-var data ='';
+  const users = {};
+  var data ='';
 
 var config = {
   connectionString:
     "Driver=SQL Server;Server=DESKTOP-ADIHTO9\\SQLEXPRESS;Database=people;Trusted_Connection=true;",
 };
-sql.connect(config, (err) => {
-   new sql.Request().query("SELECT * from Persons", (err, result) => {
-      console.log(".:The Good Place:.");
-    if (err) {
-      // SQL error, but connection OK.
-      console.log("  Shirtballs: " + err);
-    } else {
-      // All is rosey in your garden.
-      data = result;
-      console.log(data.recordset);
-      
-    }
-  });
-});
-sql.on("error", (err) => {
-  // Connection borked.
-  console.log(".:The Bad Place:.");
-  console.log("  Fork: " + err);
-});
+sql.connect(config)
+
 
 var root = {
   hello: () => {
@@ -115,7 +101,13 @@ var root = {
     return users;
   },
   getUsersSql: async() =>{
-    return data.recordset;
+    //return data.recordset;
+    try {
+      return (await new sql.Request().query(`SELECT * FROM users`)).recordset;
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
 
   },
 
@@ -128,13 +120,25 @@ var root = {
   setMesseage: ({newMessage}) => {
     message=newMessage;
     return message;
-},
+  },
 
-message: () => message,
-createUser: (args)=> {
+  message: () => message,
+  createUser: (args)=> {
     console.log(args);
     return args.user;
-}
+},
+deleteUser: async ({ id }) => {
+  try {
+    (
+      await new sql.Request()
+        .query(`delete from users where id=${id}`)
+    ).recordset;
+   //return  deletemessage;
+  } catch (err) {
+    console.error(err);
+    throw err;
+  }
+},
 
 };
 
