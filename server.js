@@ -64,12 +64,12 @@ var data = "";
 //Person Path DataBase
 const RomanPath = 'DESKTOP-NRHU0LQ';
 const OfriPath = 'LAPTOP-UVC3IKLO';
-const ShlomoPath = 'DESKTOP-ADIHTO9'; //need to enter
+const ShlomoPath = 'DESKTOP-ADIHTO9';
 const Guest = ''; //Enter Your values
 
 var config = {
   connectionString:
-    `Driver=SQL Server;Server=${ShlomoPath}\\SQLEXPRESS;Database=people;Trusted_Connection=true;`,
+    `Driver=SQL Server;Server=${RomanPath}\\SQLEXPRESS;Database=people;Trusted_Connection=true;`,
 };
 sql.connect(config);
 
